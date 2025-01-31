@@ -1,0 +1,4 @@
+inquirer
+requests
+openpyxl
+pandas
