@@ -2,3 +2,4 @@ inquirer
 requests
 openpyxl
 pandas
+docxtpl
