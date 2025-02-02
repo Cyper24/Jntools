@@ -6,26 +6,55 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, Color, Alignment, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 import subprocess
+from docxtpl import DocxTemplate
+from datetime import datetime
+import locale
 
 clear = lambda: os.system('cls')
 clear()
 
 print("""
-   _____  _______  _______  _______  _______  _____    _______ 
- _|     ||    |  ||_     _||       ||       ||     |_ |     __|
-|       ||       |  |   |  |   -   ||   -   ||       ||__     |
-|_______||__|____|  |___|  |_______||_______||_______||_______|
-      
-                                           Made with ❤  By XXiv           
+
+░▒▓███████▓▒░ ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓███████▓▒░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓█▓▒░       ░▒▓███████▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░        
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒▒▓███▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░       ░▒▓██████▓▒░  
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░             ░▒▓█▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░  ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░             ░▒▓█▓▒░ 
+░▒▓█▓▒░░▒▓█▓▒░░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░ ░▒▓█▓▒░   ░▒▓██████▓▒░ ░▒▓██████▓▒░░▒▓████████▓▒░▒▓███████▓▒░  
+                                                                                 
+                                                                                                Made with ❤  By XXiv           
 """)
 
-def manifest(kt,tjuan):
+def manifest(kt):
     list = []
     urlkt = "https://jmsgw.jntexpress.id/transportation/trackingDeatil/loading/scan/page"
+    urlkt2 = "https://jmsgw.jntexpress.id/transportation/tmsShipment/traceDetail"
     querystring = {"current":"1","size":"20000","shipmentNo":f"{kt}","scanNetworkCode":"SOC999"}
+    querystring2 = {"shipmentNo":f"{kt}"}
     print("Please Wait...")
     response = requests.request("GET", urlkt, headers=headers, params=querystring)
+    response2 = requests.request("GET", urlkt2, headers=headers, params=querystring2)
     manifest = response.json()
+    manifest2 = response2.json()
+    fdocx = manifest2["data"]["shipmentDetail"]
+    tujuan = fdocx["endName"]
+    nopol = fdocx["plateNumber"]
+    driver = fdocx["driverName"]
+    tgld = fdocx["plannedDepartureTime"]
+    locale.setlocale(locale.LC_TIME, 'id_ID')
+    xt = datetime.strptime(f'{tgld}', '%Y-%m-%d %H:%M:%S')
+    tgal = xt.strftime("%A, %d-%m-%Y / %H.%M")
+    doc = DocxTemplate("sj.docx")
+    context = {'driver' : driver,
+           'nopol': nopol,
+            'kt' : kt,
+            'tujuan' : tujuan,
+            'tgl' : tgal}
+    doc.render(context)
+    doc.save("sjnew.docx")
+    subprocess.Popen(["sjnew.docx"],shell=True)  
+
     f = manifest["data"]["records"]
     for x in f:
         billCode = x["billCode"]
@@ -46,7 +75,7 @@ def manifest(kt,tjuan):
     sheet.delete_rows(idx=2)
     sheet.insert_rows(idx=1,amount=2)
     sheet["A1"] = "SOC GATEWAY"
-    sheet["A2"] = "OUTGOING SOC GATEWAY TO " + tjuan
+    sheet["A2"] = "OUTGOING SOC GATEWAY TO " + tujuan
     sheet["B3"] = "No Bagging "
     sheet["C3"] = "AWB"
     sheet.merge_cells(start_row=1, start_column=1, end_row=1, end_column=3)
@@ -182,7 +211,7 @@ while True:
     }
     choice = input("Enter Auth Token: ")
     headers = {
-                "cookie": "HWWAFSESID=x; HWWAFSESTIME=x",
+                "cookie": "HWWAFSESID=a00e27f02785ef49ce5; HWWAFSESTIME=1738201375713",
                 "authtoken": f"{choice}",
                 "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0",
                 "Content-Type": "application/json"
@@ -193,16 +222,7 @@ while True:
             answers = inquirer.prompt(p_tools)
             if answers["alat"] == "Manifest":
                 kotug = input("Input Kode Tugas: ")
-                answers2 = inquirer.prompt(p_tujuan)
-                if answers2["tujuan"] == "JKT":
-                    tj = "JKT GATEWAY"
-                if answers2["tujuan"] == "SEG":
-                    tj = "SEG GATEWAY"
-                if answers2["tujuan"] == "SUB":
-                    tj = "SUB GATEWAY"
-                if answers2["tujuan"] == "JAT":
-                    tj = "JAT GATEWAY"
-                manifest(kotug,tj)
+                manifest(kotug)
             if answers["alat"] == "Cari Load Unload":
                 print("Edit listkt.txt Terlebih Dahulu")
                 loadunl()
