@@ -186,7 +186,7 @@ p_tools = [
     inquirer.List(
         "alat",
         message="Pilih Tools : ",
-        choices=["Manifest","Cari Load Unload","Report Incoming","Surat Karantina","Keluar"],
+        choices=["Manifest","Cari Load Unload","Report Incoming","Keluar"],
     ),
 ]
 
@@ -226,8 +226,6 @@ while True:
             if answers["alat"] == "Cari Load Unload":
                 print("Edit listkt.txt Terlebih Dahulu")
                 loadunl()
-            if answers["alat"] == "Surat Karantina":
-                subprocess.call(["C:\\Users\\Mboh\\Documents\\xxiv\\sempak\\dist\\sempak2.exe"])
             if answers["alat"] == "Report Incoming":
                 reportincoming()
             if answers["alat"] == "Keluar":
